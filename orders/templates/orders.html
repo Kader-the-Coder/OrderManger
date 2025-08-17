@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            text-align: center;
+            margin-top: 100px;
+        }
+        h1 {
+            color: #007bff;
+        }
+        p {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Place your order below!</h1>
+    <form method="POST" action="{% url 'orders:orders' %}">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" required><br><br>
+        <label for="block">Block:</label>
+        <input type="number" name="block" id="block" required><br><br>
+        <label for="unit">Unit:</label>
+        <input type="number" name="unit" id="unit" required><br><br>
+        <label for="chicken_samoosa_quantity">Chicken Samoosa Quantity:</label>
+        <input type="number" name="chicken_samoosa_quantity" id="chicken_samoosa_quantity" required><br><br>
+        <label for="mince_samoosa_quantity">Mince Samoosa Quantity:</label>
+        <input type="number" name="mince_samoosa_quantity" id="mince_samoosa_quantity" required><br><br>
+        <label for="koeksister_quantity">Koeksister Quantity:</label>
+        <input type="number" name="koeksister_quantity" id="koeksister_quantity" required><br><br>
+        <input type="submit" value="Place Order">
+    </form>
+</body>
+</html>
