@@ -61,5 +61,8 @@
     {% empty %}
     <p>No orders yet.</p>
     {% endfor %}
+
+    <a href="{% url 'orders:index' %}">Back</a> |
+    <a href="{% url 'orders:display_products' %}">Add products</a>
 </body>
 </html>
