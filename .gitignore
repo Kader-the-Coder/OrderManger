@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+*.manifest
+*.spec
+
+# Virtual environment
+venv/
+env/
+ENV/
+*.env
+*.venv
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Django
+*.log
+db.sqlite3
+media/
+staticfiles/
+static/
+
+# Migrations (optional: keep them if sharing with a team)
+# Uncomment the next line if you want to ignore migration files
+# */migrations/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Render/Deployment
+.idea/
