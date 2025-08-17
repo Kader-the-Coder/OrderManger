@@ -9,33 +9,57 @@
             background-color: #f5f5f5;
             color: #333;
             text-align: center;
-            margin-top: 100px;
+            margin-top: 50px;
         }
-        h1 {
+        h1, h2 {
             color: #007bff;
         }
         p {
             font-size: 18px;
         }
+        form {
+            margin-bottom: 50px;
+        }
+        .order {
+            background-color: #fff;
+            margin: 10px auto;
+            padding: 10px;
+            border-radius: 5px;
+            width: 60%;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
     <h1>Place your order below!</h1>
-    <form method="POST" action="{% url 'orders:orders' %}">
+    <form method="post" action="{% url 'orders:create_order' %}">
         {% csrf_token %}
-        <label for="name">Name:</label>
-        <input type="text" name="name" id="name" required><br><br>
-        <label for="block">Block:</label>
-        <input type="number" name="block" id="block" required><br><br>
-        <label for="unit">Unit:</label>
-        <input type="number" name="unit" id="unit" required><br><br>
-        <label for="chicken_samoosa_quantity">Chicken Samoosa Quantity:</label>
-        <input type="number" name="chicken_samoosa_quantity" id="chicken_samoosa_quantity" required><br><br>
-        <label for="mince_samoosa_quantity">Mince Samoosa Quantity:</label>
-        <input type="number" name="mince_samoosa_quantity" id="mince_samoosa_quantity" required><br><br>
-        <label for="koeksister_quantity">Koeksister Quantity:</label>
-        <input type="number" name="koeksister_quantity" id="koeksister_quantity" required><br><br>
-        <input type="submit" value="Place Order">
+        <input type="text" name="name" placeholder="Customer Name" required>
+        <input type="number" name="block" placeholder="Block" required>
+        <input type="number" name="unit" placeholder="Unit" required>
+
+        {% for product in products %}
+        <label>{{ product.name }} (R{{ product.price }})</label>
+        <input type="number" name="product_{{ product.id }}" value="0" min="0">
+        {% endfor %}
+
+        <button type="submit">Place Order</button>
     </form>
+
+    <h2>Existing Orders</h2>
+    {% for order in orders %}
+    <div class="order">
+        <p><strong>{{ order.name }}</strong> (Block {{ order.block }}, Unit {{ order.unit }}) — Total: R{{ order.total_price }}</p>
+        <ul>
+            {% for item in order.items.all %}
+            <li>{{ item.product.name }}: {{ item.quantity }} — R{{ item.total_price }}</li>
+            {% empty %}
+            <li>No items in this order.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% empty %}
+    <p>No orders yet.</p>
+    {% endfor %}
 </body>
 </html>
