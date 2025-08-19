@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}My App{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Header -->
+    <header class="bg-primary text-white py-3 mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                {% if user.is_authenticated %}
+                    {% if user.company %}
+                        <h1 class="mb-0"><a href="{% url 'orders:index' %}" class="text-white text-decoration-underline">{{ user.company }}</a></h1>
+                    {% else %}
+                        <h1 class="mb-0"><a href="{% url 'orders:index' %}" class="text-white text-decoration-underline">Order Manager</a></h1>
+                    {% endif %}
+                {% else %}
+                    <h1 class="mb-0"><a href="{% url 'orders:index' %}" class="text-white text-decoration-underline">Order Manager</a></h1>
+                {% endif %}
+            </div>
+            <div>
+                {% if user.is_authenticated %}
+                    <p class="mb-0">Welcome, {{ user.username }} | <a href="{% url 'accounts:logout' %}" class="text-white text-decoration-underline">Logout</a></p>
+                {% else %}
+                    <p class="mb-0">
+                        <a href="{% url 'accounts:login' %}" class="text-white text-decoration-underline">Login</a> |
+                        <a href="{% url 'accounts:register' %}" class="text-white text-decoration-underline">Register</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+
+    <!-- Main content -->
+    <main class="container flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center py-3 mt-auto">
+        {% if user.is_authenticated %}
+            {% if user.company %}
+                <p class="mb-0">&copy; 2025 {{ user.company }} | Logged in as {{ user.username }}</p>
+            {% else %}
+                <p class="mb-0">&copy; 2025 Order Manager | Logged in as {{ user.username }}</p>
+            {% endif %}
+        {% else %}
+            <p class="mb-0">&copy; 2025 Order Manager</p>
+        {% endif %}
+    </footer>
+
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-XCTwlIYhw3UvmIyxZr6D2N7yOjltbk4hP6n8XmRSVt57t6joPv8+/jhvGyz4nLZp" crossorigin="anonymous"></script>
+</body>
+</html>

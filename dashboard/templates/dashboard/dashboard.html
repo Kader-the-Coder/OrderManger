@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card mx-auto" style="max-width: 600px;">
+        <div class="card-body">
+            <h1 class="card-title text-center mb-4">Company Dashboard</h1>
+
+            {% if company %}
+                <h5 class="mb-2">Company: {{ company.name }}</h5>
+                <p class="mb-2">Owner: {{ company.owner.name }}</p>
+
+                <h6>Members:</h6>
+                <ul class="mb-3">
+                    {% for member in company.members.all %}
+                        <li>{{ member.username }}</li>
+                    {% endfor %}
+                </ul>
+
+                <form method="post" action="{% url 'dashboard:leave_company' %}" class="mb-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning w-100">Leave Company</button>
+                </form>
+
+                {% if company.owner == user %}
+                    <form method="post" action="{% url 'dashboard:delete_company' %}" class="mb-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger w-100">Delete Company</button>
+                    </form>
+
+                    <h6>Invite User</h6>
+                    <form method="post" action="{% url 'dashboard:invite_user' %}" class="mb-3">
+                        {% csrf_token %}
+                        <input type="email" name="email" class="form-control mb-2" placeholder="User Email" required>
+                        <button type="submit" class="btn btn-primary w-100">Send Invitation</button>
+                    </form>
+                {% endif %}
+
+            {% else %}
+                <h5 class="mb-3 text-center">You are not in a company</h5>
+                <h6>Create a Company</h6>
+                <form method="post" action="{% url 'dashboard:create_company' %}" class="mb-3">
+                    {% csrf_token %}
+                    <input type="text" name="name" class="form-control mb-2" placeholder="Company Name" required>
+                    <button type="submit" class="btn btn-success w-100">Create Company</button>
+                </form>
+            {% endif %}
+
+            <h6>Invitations</h6>
+            <ul class="list-unstyled">
+                {% for invite in invitations %}
+                    <li class="mb-2 d-flex justify-content-between align-items-center">
+                        <span>{{ invite.company.name }} invited by {{ invite.invited_by.username }}</span>
+                        <form method="post" action="{% url 'dashboard:accept_invitation' invite.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                        </form>
+                    </li>
+                {% empty %}
+                    <li class="text-muted">No pending invitations.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

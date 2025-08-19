@@ -1,68 +1,143 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Order Manager</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            text-align: center;
-            margin-top: 50px;
-        }
-        h1, h2 {
-            color: #007bff;
-        }
-        p {
-            font-size: 18px;
-        }
-        form {
-            margin-bottom: 50px;
-        }
-        .order {
-            background-color: #fff;
-            margin: 10px auto;
-            padding: 10px;
-            border-radius: 5px;
-            width: 60%;
-            text-align: left;
-        }
-    </style>
-</head>
-<body>
-    <h1>Place your order below!</h1>
-    <form method="post" action="{% url 'orders:create_order' %}">
-        {% csrf_token %}
-        <input type="text" name="name" placeholder="Customer Name" required>
-        <input type="number" name="block" placeholder="Block" required>
-        <input type="number" name="unit" placeholder="Unit" required>
+{% extends 'base.html' %}
+{% load static %}
 
-        {% for product in products %}
-        <label>{{ product.name }} (R{{ product.price }})</label>
-        <input type="number" name="product_{{ product.id }}" value="0" min="0">
-        {% endfor %}
+{% block content %}
+<h1>Place your order below!</h1>
 
-        <button type="submit">Place Order</button>
-    </form>
-
-    <h2>Existing Orders</h2>
-    {% for order in orders %}
-    <div class="order">
-        <p><strong>{{ order.name }}</strong> (Block {{ order.block }}, Unit {{ order.unit }}) — Total: R{{ order.total_price }}</p>
-        <ul>
-            {% for item in order.items.all %}
-            <li>{{ item.product.name }}: {{ item.quantity }} — R{{ item.total_price }}</li>
-            {% empty %}
-            <li>No items in this order.</li>
-            {% endfor %}
-        </ul>
+{% if products %}
+<form method="post" action="{% url 'orders:create_order' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <input type="text" class="form-control" name="name" placeholder="Customer Name" required>
     </div>
-    {% empty %}
-    <p>No orders yet.</p>
+    <div class="mb-3">
+        <input type="number" class="form-control" name="block" placeholder="Block" required>
+    </div>
+    <div class="mb-3">
+        <input type="number" class="form-control" name="unit" placeholder="Unit" required>
+    </div>
+
+    {% for product in products %}
+        {% if product.company == user.company %}
+        <div class="mb-2">
+            <label>{{ product.name }} (R{{ product.price }})</label>
+            <input type="number" class="form-control" name="product_{{ product.id }}" value="0" min="0">
+        </div>
+        {% endif %}
     {% endfor %}
 
-    <a href="{% url 'orders:index' %}">Back</a> |
-    <a href="{% url 'orders:display_products' %}">Add products</a>
-</body>
-</html>
+    <button type="submit" class="btn btn-primary w-100">Place Order</button>
+</form>
+{% else %}
+<p>No products available. Please <a href="{% url 'orders:display_products' %}">add products</a> before attempting to create new orders!</p>
+{% endif %}
+
+<h2>Existing Orders</h2>
+<ul class="list-unstyled">
+{% for order in orders %}
+    {% if order.company == user.company %}
+    <li class="order border rounded p-2 mb-2">
+        <strong>{{ order.name }} (Block {{ order.block }}, Unit {{ order.unit }})</strong>
+        <div>Total: R{{ order.total_price }}</div>
+        <div>Status: {{ order.status }} | Payment: {{ order.payment_status }}</div>
+
+        <small>
+        {% for item in order.items.all %}
+            {% if item.product.company == user.company %}
+                {{ item.product.name }} × {{ item.quantity }} (R{{ item.total_price }}){% if not forloop.last %}, {% endif %}
+            {% endif %}
+        {% endfor %}
+        </small>
+
+        <div class="mt-1">
+            <form method="post" action="{% url 'orders:toggle_order_status' order.id %}" class="d-inline">
+                {% csrf_token %}
+                {% if order.status != 'completed' %}
+                    <button type="submit" name="status" value="completed" class="btn btn-sm btn-success">Complete</button>
+                {% else %}
+                    <button type="submit" name="status" value="pending" class="btn btn-sm btn-warning">Incomplete</button>
+                {% endif %}
+                {% if order.status != 'canceled' %}
+                    <button type="submit" name="status" value="canceled" class="btn btn-sm btn-danger">Cancel</button>
+                {% endif %}
+            </form>
+
+            <form method="post" action="{% url 'orders:toggle_order_payment' order.id %}" class="d-inline">
+                {% csrf_token %}
+                {% if order.payment_status != 'paid' %}
+                    <button type="submit" name="payment_status" value="paid" class="btn btn-sm btn-primary">Mark Paid</button>
+                {% else %}
+                    <button type="submit" name="payment_status" value="unpaid" class="btn btn-sm btn-secondary">Mark Unpaid</button>
+                {% endif %}
+            </form>
+
+            <button type="button" class="btn btn-sm btn-info" onclick='openEditModal({{ order.id }}, "{{ order.name }}", {{ order.block }}, {{ order.unit }}, [
+                {% for item in order.items.all %}
+                    {% if item.product.company == user.company %}
+                        {product_id: {{ item.product.id }}, quantity: {{ item.quantity }} },
+                    {% endif %}
+                {% endfor %}
+            ])'>Edit</button>
+
+            <form method="post" action="{% url 'orders:delete_order' order.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this order?');">
+                    Delete
+                </button>
+            </form>
+        </div>
+
+        <small class="text-muted d-block mt-1">
+            Placed: {{ order.created_at|date:"d M Y H:i" }} | Updated: {{ order.updated_at|date:"d M Y H:i" }}
+        </small>
+    </li>
+    {% endif %}
+{% empty %}
+    <li>No orders yet.</li>
+{% endfor %}
+</ul>
+
+<!-- Edit Order Modal (kept as popup) -->
+<div id="editOrderModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); text-align:center; z-index:1000;">
+    <div class="modal-content bg-white p-3 rounded" style="display:inline-block; margin-top:50px; width:50%; text-align:left;">
+        <h2>Edit Order</h2>
+        <form id="editOrderForm" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="order_id" id="edit_order_id">
+
+            <div class="mb-2">
+                <label>Customer Name:</label>
+                <input type="text" name="name" id="edit_name" class="form-control" required>
+            </div>
+            <div class="mb-2">
+                <label>Block:</label>
+                <input type="number" name="block" id="edit_block" class="form-control" required>
+            </div>
+            <div class="mb-2">
+                <label>Unit:</label>
+                <input type="number" name="unit" id="edit_unit" class="form-control" required>
+            </div>
+
+            <div id="edit_products_container" class="mb-3"></div>
+
+            <button type="submit" class="btn btn-primary">Update Order</button>
+            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<a href="{% url 'orders:index' %}" class="btn btn-link">Back</a> |
+<a href="{% url 'orders:display_products' %}" class="btn btn-link">Add products</a>
+
+<script src="{% static 'orders/orders.js' %}"></script>
+<script>
+    initOrdersJS([
+        {% for product in products %}
+            {% if product.company == user.company %}
+                {id: {{ product.id }}, name: "{{ product.name }}", price: {{ product.price }} },
+            {% endif %}
+        {% endfor %}
+    ]);
+</script>
+
+{% endblock %}
